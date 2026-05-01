@@ -30,6 +30,18 @@ const AppPage = () => {
 
   useEffect(() => { if (user) loadServers(); /* eslint-disable-next-line */ }, [user]);
 
+  // Live updates when a server changes (e.g. invite code edited) or membership changes
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("servers-and-members")
+      .on("postgres_changes", { event: "*", schema: "public", table: "servers" }, () => loadServers())
+      .on("postgres_changes", { event: "*", schema: "public", table: "server_members", filter: `user_id=eq.${user.id}` }, () => loadServers())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   // Reset channel when switching servers
   useEffect(() => { setActiveChannel(null); }, [activeServerId]);
 
