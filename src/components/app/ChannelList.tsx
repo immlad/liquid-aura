@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Channel, Server } from "@/types/db";
-import { Hash, Volume2, Plus, Copy, Check } from "lucide-react";
+import { Hash, Volume2, Plus, Copy, Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   server: Server;
@@ -15,11 +16,17 @@ interface Props {
 }
 
 export const ChannelList = ({ server, activeChannelId, onSelectChannel }: Props) => {
+  const { user } = useAuth();
+  const isOwner = user?.id === server.owner_id;
   const [channels, setChannels] = useState<Channel[]>([]);
   const [copied, setCopied] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<"text" | "voice">("text");
+  const [editing, setEditing] = useState(false);
+  const [codeDraft, setCodeDraft] = useState(server.join_code);
+  const [savingCode, setSavingCode] = useState(false);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data } = await supabase.from("channels").select("*").eq("server_id", server.id).order("position");
