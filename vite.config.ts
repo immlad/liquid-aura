@@ -4,8 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  // REQUIRED for jsDelivr — absolute paths only
-  base: "/",
+  // REQUIRED for jsDelivr — use relative paths
+  base: "./",
 
   server: {
     host: "::",
