@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Channel, Server } from "@/types/db";
-import { Hash, Volume2, Plus, Copy, Check } from "lucide-react";
+import { Hash, Volume2, Plus, Copy, Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   server: Server;
@@ -15,11 +16,17 @@ interface Props {
 }
 
 export const ChannelList = ({ server, activeChannelId, onSelectChannel }: Props) => {
+  const { user } = useAuth();
+  const isOwner = user?.id === server.owner_id;
   const [channels, setChannels] = useState<Channel[]>([]);
   const [copied, setCopied] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<"text" | "voice">("text");
+  const [editing, setEditing] = useState(false);
+  const [codeDraft, setCodeDraft] = useState(server.join_code);
+  const [savingCode, setSavingCode] = useState(false);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data } = await supabase.from("channels").select("*").eq("server_id", server.id).order("position");
@@ -65,14 +72,69 @@ export const ChannelList = ({ server, activeChannelId, onSelectChannel }: Props)
           <span className="text-xl">{server.icon_emoji}</span>
           <h2 className="font-semibold truncate flex-1">{server.name}</h2>
         </div>
-        <button onClick={copyCode}
-          className="mt-3 w-full glass rounded-xl py-2 px-3 flex items-center justify-between hover-lift group">
-          <div className="text-left">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Invite code</div>
-            <div className="font-mono text-sm tracking-widest">{server.join_code}</div>
+        {editing ? (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const next = codeDraft.trim().toUpperCase();
+              if (next === server.join_code) { setEditing(false); return; }
+              if (!/^[A-Z0-9]{4,12}$/.test(next)) { toast.error("4–12 letters or numbers"); return; }
+              setSavingCode(true);
+              const { error } = await supabase.rpc("update_join_code", { _server_id: server.id, _new_code: next });
+              setSavingCode(false);
+              if (error) { toast.error(error.message); return; }
+              toast.success("Invite code updated");
+              setEditing(false);
+            }}
+            className="mt-3 glass rounded-xl py-2 px-3 flex items-center gap-2 animate-fade-in"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">New invite code</div>
+              <input
+                ref={editInputRef}
+                value={codeDraft}
+                onChange={(e) => setCodeDraft(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))}
+                maxLength={12}
+                disabled={savingCode}
+                className="w-full bg-transparent outline-none font-mono text-sm tracking-widest uppercase"
+                autoFocus
+              />
+            </div>
+            <button type="submit" disabled={savingCode} className="text-success hover:scale-110 transition-transform">
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEditing(false); setCodeDraft(server.join_code); }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </form>
+        ) : (
+          <div className="mt-3 glass rounded-xl py-2 px-3 flex items-center justify-between hover-lift group">
+            <button onClick={copyCode} className="text-left flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Invite code</div>
+              <div className="font-mono text-sm tracking-widest truncate">{server.join_code}</div>
+            </button>
+            <div className="flex items-center gap-2 ml-2">
+              {isOwner && (
+                <button
+                  onClick={() => { setCodeDraft(server.join_code); setEditing(true); }}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Edit code"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {copied ? <Check className="h-4 w-4 text-success" /> : (
+                <button onClick={copyCode} className="text-muted-foreground group-hover:text-foreground transition-colors" title="Copy">
+                  <Copy className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
-          {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />}
-        </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 px-1">

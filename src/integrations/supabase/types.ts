@@ -173,6 +173,10 @@ export type Database = {
         Returns: boolean
       }
       join_server_by_code: { Args: { _code: string }; Returns: string }
+      update_join_code: {
+        Args: { _new_code: string; _server_id: string }
+        Returns: string
+      }
       user_can_access_channel: {
         Args: { _channel_id: string; _user_id: string }
         Returns: boolean
