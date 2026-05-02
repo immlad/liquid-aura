@@ -4,11 +4,12 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  // REQUIRED for jsDelivr — use relative paths
+  // REQUIRED for GitHub Pages + jsDelivr
+  // Ensures all assets load correctly from /docs or CDN
   base: "./",
 
   server: {
-    host: "::",
+    host: "::",     // IPv6 support
     port: 8080,
     hmr: {
       overlay: false,
@@ -33,4 +34,10 @@ export default defineConfig(({ mode }) => ({
       "@tanstack/query-core"
     ],
   },
+
+  build: {
+    outDir: "dist",     // Vite default (you will rename to /docs)
+    emptyOutDir: true,
+    sourcemap: false,
+  }
 }));
