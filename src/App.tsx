@@ -28,25 +28,6 @@ export default function App() {
     return bannedUsers.includes(user.toLowerCase());
   }, [user, bannedUsers]);
 
-  const handleBan = (name: string) => {
-    const n = name.trim().toLowerCase();
-    if (!n) return;
-    setBannedUsers((prev) =>
-      prev.includes(n) ? prev : [...prev, n]
-    );
-  };
-
-  const handleUnban = (name: string) => {
-    const n = name.trim().toLowerCase();
-    if (!n) return;
-    setBannedUsers((prev) => prev.filter((u) => u !== n));
-  };
-
-  const handleSetGlobalMessage = (msg: string) => {
-    const m = msg.trim();
-    setGlobalMessage(m || null);
-  };
-
   return (
     <div className="app-root">
       {globalMessage && (
@@ -87,16 +68,18 @@ export default function App() {
         )}
 
         {admin && (
-          <div className="admin-section">
-            <AdminPanel
-              bannedUsers={bannedUsers}
-              servers={servers}
-              globalMessage={globalMessage}
-              onBan={handleBan}
-              onUnban={handleUnban}
-              onSetGlobalMessage={handleSetGlobalMessage}
-            />
-          </div>
+          <AdminPanel
+            bannedUsers={bannedUsers}
+            servers={servers}
+            globalMessage={globalMessage}
+            onBan={(n) => setBannedUsers((prev) => [...prev, n.toLowerCase()])}
+            onUnban={(n) =>
+              setBannedUsers((prev) => prev.filter((u) => u !== n.toLowerCase()))
+            }
+            onSetGlobalMessage={(msg) =>
+              setGlobalMessage(msg.trim() || null)
+            }
+          />
         )}
       </div>
     </div>
