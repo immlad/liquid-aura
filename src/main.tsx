@@ -4,7 +4,6 @@ import App from "./App";
 import "./index.css";
 import { JasonSyncContext } from "./contexts/JasonSyncContext";
 
-// HashRouter-compatible param parsing
 const hash = window.location.hash;
 const queryString = hash.includes("?") ? hash.split("?")[1] : "";
 const params = new URLSearchParams(queryString);
