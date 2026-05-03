@@ -1,33 +1,35 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index.tsx";
-import Auth from "./pages/Auth.tsx";
-import AppPage from "./pages/AppPage.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { useEffect } from "react";
+import { useJasonSync } from "./contexts/JasonSyncContext";
+import "./App.css";
 
-const queryClient = new QueryClient();
+export default function App() {
+  const { user, admin, theme } = useJasonSync();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider delayDuration={150}>
-        <Toaster />
-        <Sonner />
-        <HashRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/app" element={<AppPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </HashRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+  // Apply synced theme to body
+  useEffect(() => {
+    if (theme) {
+      document.body.classList.forEach(cls => {
+        if (cls.startsWith("theme-")) document.body.classList.remove(cls);
+      });
+      document.body.classList.add(`theme-${theme}`);
+    }
+  }, [theme]);
 
-export default App;
+  return (
+    <div className="app-container">
+      {user && (
+        <div className="sync-banner">
+          <p>Signed in from JASON OS as <strong>{user}</strong></p>
+          {admin && <p>You have admin privileges</p>}
+          {theme && <p>Theme synced: {theme}</p>}
+        </div>
+      )}
+
+      {/* Your existing Liquid Aura UI */}
+      <div className="app-content">
+        <h1>Liquid Aura</h1>
+        <p>Your synced chat environment is ready.</p>
+      </div>
+    </div>
+  );
+}
