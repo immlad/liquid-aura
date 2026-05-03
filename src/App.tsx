@@ -1,13 +1,9 @@
 import { useEffect } from "react";
 import "./App.css";
 import { useJasonSync } from "./contexts/JasonSyncContext";
-import { useJasonSupabaseSync } from "./hooks/useJasonSupabaseSync";
-import { Header } from "./components/Header";
 
 export default function App() {
-  const { user, admin, theme } = useJasonSync();
-
-  useJasonSupabaseSync();
+  const { user, admin, theme, avatar } = useJasonSync();
 
   useEffect(() => {
     if (!theme) return;
@@ -19,7 +15,14 @@ export default function App() {
 
   return (
     <div className="app-root">
-      <Header />
+      <header className="la-header">
+        {avatar && <img src={avatar} className="la-avatar" />}
+        <div className="la-header-text">
+          <div className="la-header-name">{user ?? "Guest"}</div>
+          {admin && <div className="la-admin-pill">Admin</div>}
+        </div>
+      </header>
+
       {user && (
         <div className="sync-banner">
           <p>
@@ -31,9 +34,8 @@ export default function App() {
       )}
 
       <div className="app-content">
-        {/* your existing Liquid Aura layout / routes / channels here */}
         <h1>Liquid Aura</h1>
-        <p>Synced with JASON OS.</p>
+        <p>Synced with JASON OS identity.</p>
       </div>
     </div>
   );
